@@ -82,9 +82,6 @@ sywz-pb/
 - **AI 配音**: 微软 Edge TTS (tts.wangwangit.com API)
 - **降级方案**: 浏览器原生 SpeechSynthesis API
 
-## 📜 License
-
-MIT License - 欢迎自由使用、修改和分发
 
 ## 🙏 致谢
 
