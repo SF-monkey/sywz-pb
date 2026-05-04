@@ -96,7 +96,7 @@
         <h1>复印王座 · 随机旁白生成器</h1>
 
         <div class="row">
-            <label>输入你的名字</label>
+            <label>输入一个名字</label>
             <input type="text" id="username" placeholder="请在这里填写名字">
         </div>
 
@@ -332,7 +332,7 @@
         function generateRandomText(){
             let name = document.getElementById("username").value.trim();
             if(!name){
-                alert("请先输入你的名字！");
+                alert("请先输入一个名字！");
                 return;
             }
             let totalLen = parseInt(document.getElementById("lenSel").value);
