@@ -88,5 +88,4 @@ MIT License - 欢迎自由使用、修改和分发
 
 ## 🙏 致谢
 
-- 文案风格参考：动画《神印王座》
 - AI 配音技术支持：微软 Azure Neural Voices
