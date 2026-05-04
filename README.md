@@ -1,4 +1,4 @@
-# 神印王座 · 随机旁白生成器 - AI配音版
+# 神印王座 · 随机专属歌颂旁白生成器
 
 > 🎭 输入你的名字，生成专属歌颂文案，支持 AI 配音朗读
 
@@ -17,7 +17,7 @@
 
 直接访问 GitHub Pages：
 ```
-https://sf-monkey.github.io/sywz-pb/sywz-pb.html
+https://sf-monkey.github.io/sywz-pb/
 ```
 
 ### 本地使用
@@ -33,18 +33,18 @@ https://sf-monkey.github.io/sywz-pb/sywz-pb.html
    **方法一：Python（推荐）**
    ```bash
    python -m http.server 8000
-   # 然后访问 http://localhost:8000/sywz-pb.html
+   # 然后访问 http://localhost:8000/
    ```
 
    **方法二：Node.js**
    ```bash
    npx serve .
-   # 然后访问 http://localhost:3000/sywz-pb.html
+   # 然后访问 http://localhost:3000/
    ```
 
    **方法三：VS Code**
    - 安装 "Live Server" 插件
-   - 右键 `sywz-pb.html` → "Open with Live Server"
+   - 右键 `index.html` → "Open with Live Server"
 
 3. **使用步骤**
    - 打开页面后，输入你的名字
@@ -54,6 +54,26 @@ https://sf-monkey.github.io/sywz-pb/sywz-pb.html
    - 点击「随机生成文案」
    - 点击「一键AI配音朗读」播放
    - 或点击「复制文案」复制到剪贴板
+
+## 🎨 文案风格
+
+| 风格 | 描述 | 示例 |
+|------|------|------|
+| 悲壮深情 | 牺牲、守护、孤独 | "明知前路无归途，仍一往无前，此之谓骑士精神。" |
+| 龙傲天 | 无敌、唯一、救世主 | "虽举世无双天下无敌，却只能独自承受这份强大带来的无尽孤独。" |
+| 纯意境 | 无名字，纯旁白描述 | "剑因守护而有温度，人因大义而有风骨。" |
+
+## 🗣️ 配音音色
+
+| 音色 | 风格 | 推荐场景 |
+|------|------|----------|
+| 麦克阿瑟将军 | 豪迈霸气 | 龙傲天风格 |
+| 云皓·豪迈男声 | 豪迈激昂 | 史诗旁白 |
+| 云健·稳重男声 | 稳重低沉 | 深情叙述 |
+| 云泽·深沉男声 | 深沉浑厚 | 悲壮场景 |
+| 晓秋·成熟女声 | 成熟知性 | 深情旁白 |
+| 晓甄·端庄女声 | 端庄大气 | 正式场合 |
+| 晓伊·甜美女声 | 甜美温柔 | 轻松场景 |
 
 ## ⚠️ 常见问题
 
@@ -75,8 +95,9 @@ https://sf-monkey.github.io/sywz-pb/sywz-pb.html
 
 ```
 sywz-pb/
-├── sywz-pb.html      # 主页面（单文件，无需构建）
-└── README.md         # 项目说明文档
+├── index.html         # 主页面（单文件，无需构建）
+├── README.md         # 项目说明文档
+└── LICENSE          # MIT 许可证
 ```
 
 ## 🛠️ 技术栈
