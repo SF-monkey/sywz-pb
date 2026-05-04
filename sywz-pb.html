@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神印王座 随机旁白生成器</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{
+            background: linear-gradient(135deg, #050a18, #0f1a35, #102040);
+            color: #e6edf7;
+            font-family: "微软雅黑",sans-serif;
+            padding: 40px 20px;
+            line-height: 1.8;
+            min-height: 100vh;
+        }
+        .container{
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(25,35,60,0.75);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid #4a5b8c;
+            box-shadow: 0 0 40px #273458;
+        }
+        h1{
+            text-align: center;
+            color: #ffd770;
+            margin-bottom: 25px;
+            font-size: 24px;
+            letter-spacing: 2px;
+        }
+        .row{
+            margin: 15px 0;
+        }
+        label{
+            display: block;
+            margin-bottom: 8px;
+            color: #c5d4f0;
+        }
+        input,select{
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 17px;
+            border-radius: 8px;
+            border: none;
+            background: #151e38;
+            color: #fff;
+            outline: none;
+            border: 1px solid #556899;
+        }
+        .btn-group{
+            display: flex;
+            gap: 12px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+        button{
+            flex:1;
+            min-width: 110px;
+            padding:12px;
+            font-size:16px;
+            border-radius:8px;
+            border:none;
+            background: linear-gradient(135deg,#b89240,#ffd770);
+            color: #000;
+            font-weight:bold;
+            cursor:pointer;
+            transition: 0.3s;
+        }
+        button:hover{
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .result{
+            margin-top:20px;
+            padding:20px;
+            background: rgba(12,20,40,0.65);
+            border-radius:12px;
+            border:1px solid #3a4b78;
+            font-size:16px;
+            white-space: pre-wrap;
+            min-height: 180px;
+            line-height: 2;
+        }
+        .tip{
+            color:#7d98cc;
+            font-size:14px;
+            margin-top:10px;
+            text-align:center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>神印王座 · 随机旁白生成器</h1>
+
+        <div class="row">
+            <label>输入你的名字</label>
+            <input type="text" id="username" placeholder="请在这里填写名字">
+        </div>
+
+        <div class="row">
+            <label>文案长度选择</label>
+            <select id="lenSel">
+                <option value="6">短句精简版（6句）</option>
+                <option value="9" selected>标准适中版（9句）</option>
+                <option value="14">长篇史诗版（14句）</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <label>配音音色选择</label>
+            <select id="voiceSel">
+				<option value="zh-CN-YunzeNeural">麦克阿瑟将军（推荐）</option>
+                <option value="zh-CN-YunhaoNeural">云皓·豪迈男声</option>
+                <option value="zh-CN-YunjianNeural">云健·稳重男声</option>
+				<option value="zh-CN-XiaoqiuNeural">晓秋·成熟女声（推荐）</option>
+                <option value="zh-CN-XiaozhenNeural">晓甄·端庄女声</option>
+                <option value="zh-CN-XiaoyiNeural">晓伊·甜美女声</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <label>朗读语速</label>
+            <select id="rateSel">
+                <option value="0.85">缓慢深情</option>
+                <option value="1.0" selected>标准旁白</option>
+                <option value="1.15">稍快激昂</option>
+                <option value="1.3">铿锵有力</option>
+            </select>
+        </div>
+
+        <div class="btn-group">
+            <button onclick="generateRandomText()">随机生成文案</button>
+            <button onclick="readVoice()" id="voiceBtn">一键AI配音朗读</button>
+            <button onclick="copyText()">复制文案</button>
+        </div>
+
+        <div class="result" id="resultBox">
+            输入名字生成
+        </div>
+        <div class="tip">配音基于微软Edge神经网络语音</div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════
+        //  Edge TTS AI配音 - API配置
+        // ═══════════════════════════════════════════
+        const TTS_API_URL = 'https://tts.wangwangit.com/v1/audio/speech';
+
+        // ═══════════════════════════════════════════
+        //  文案素材库 （A组+B组 来自原版升级逻辑）
+        // ═══════════════════════════════════════════
+
+        // A组：可带名字/「他」的前缀句，后缀带逗号方便拼接（40句，悲壮深情风格）
+        const namePrefixLib = [
+            // 原有12句保留
+            "，是光明神眷，骑士之巅，以凡躯承神命，以剑心照永恒。",
+            "，如晨曦一缕微光，刺破永夜苍茫，照亮世间前路。",
+            "，身负光明印记，历经万般磨难，淬炼无瑕本心。",
+            "，以凡人之躯比肩神明，以心中信念书写不朽传奇。",
+            "，自降生之初，便为光明而生，为守护而行。",
+            "，名藏希望，心承信仰，是黑暗之中不灭的星火。",
+            "，千万次挥剑磨尽长夜，锋芒所至皆为苍生。",
+            "，一身伤痕藏于铠甲之下，双肩扛起万千生灵期许。",
+            "，逆风执炬向死而生，纵使流年短暂，亦燃尽万丈光华。",
+            "，坚守心中大义，挣脱宿命枷锁，不改守护初心。",
+            "，怀谦卑公正之心，守仁义正义之道，愿舍己渡众生。",
+            "，心怀悲悯，英勇执着，以灵魂纯粹立世间风骨。",
+            // 新增28句悲壮深情风格
+            "，眼眸深处藏着星辰大海，胸腔里燃烧着不灭的信仰之焰。",
+            "，甘愿以身为饵引燃黑暗，纵粉身碎骨也要为苍生换来一线生机。",
+            "，将悲伤深埋于铠甲之下，将希望播撒于黎明之前。",
+            "，纵使命运多舛从未屈服，以血肉之躯对抗天地不公。",
+            "，每一次倒下都是为了更好地站起，每一次受伤都是荣耀的勋章。",
+            "，以悲悯之心凝视苍生疾苦，以无畏之姿迎战无尽黑暗。",
+            "，哪怕前路是万丈深渊，也要化作最后一道刺破黑暗的光。",
+            "，将毕生温柔藏于剑锋，只在无人处独自承受所有伤痛。",
+            "，心中有泪却从不轻弹，只因身后有无数期盼的目光。",
+            "，纵万箭穿心亦面不改色，守护二字是他此生最重的枷锁。",
+            "，以燃烧生命为代价，在黑暗中书写光明的不朽传奇。",
+            "，明知是悲剧结局仍义无反顾，因为这是骑士无法逃脱的宿命。",
+            "，将所有痛苦化为力量，将所有伤痕铸成铠甲。",
+            "，每一道新添的伤疤，都是他守护这片土地的勋章。",
+            "，纵使全世界都背弃了他，他依然选择守护这个世界。",
+            "，以凡人之躯承受神明之重，以骑士之名书写悲怆史诗。",
+            "，明知不可为而为之，明知不可得而求之，此乃骑士之道。",
+            "，将眼泪化为战斗力，将悲伤化为守护的勇气。",
+            "，他是黑暗中最孤独的光，越孤独越璀璨。",
+            "，每一次抉择都是割舍，每一次守护都是燃烧生命。",
+            "，铠甲之下是无尽的伤痕，伤痕之下是永恒的信念。",
+            "，以一己之力对抗命运洪流，纵粉身碎骨亦不改初心。",
+            "，将所有的爱与温柔，都献给了这片需要守护的土地。",
+            "，明知前路无归途，仍一往无前，此之谓骑士精神。",
+            "，每一剑挥出都是与命运的抗争，每一剑落下都是对光明的信仰。",
+            "，站在悬崖边为别人铺路，哪怕自己坠入深渊也在所不惜。",
+            "，心中有万千不舍，却只能化作更坚定的守护。",
+            "，悲壮的背影是世间最美的风景，孤独的坚持是永恒的赞歌。",
+            // 龙傲天+悲壮风格新增20句
+            "，虽是这世间唯一的救世主，却要独自承受救世使命带来的万钧重压。",
+            "，天选之人，肩上扛着整个世界的命运，这份荣耀背后是无尽的孤独。",
+            "，虽举世无双天下无敌，却只能独自站在巅峰，无人可理解他的孤独。",
+            "，是唯一能打开那扇门的人，却也要独自承受门后无尽的黑暗与代价。",
+            "，拯救世界这种事，除了他不可能有第二人，而这份唯一性也是永恒的诅咒。",
+            "，一剑光寒十九洲，敌人在他面前不堪一击，可这份强大让他失去了所有同龄的对手与朋友。",
+            "，是黑暗中唯一的光，却要燃烧自己才能照亮世间，这份光芒的代价是燃尽生命。",
+            "，命中注定要成为传奇，也命中注定要独自承受传奇背后的万般苦楚。",
+            "，唯有他能做到这件事，这是天命，也是他无法逃脱的永恒枷锁。",
+            "，碾压一切敌人的同时，也碾碎了自己平凡人生的所有可能。",
+            "，是天才之中的天才，是传奇之中的传奇，却也是孤独之中的孤独。",
+            "，一个人便是一道不可逾越的长城，而这道长城的每一块砖石都是他的血肉与白骨。",
+            "，当他说出那句我来，他便放弃了普通人的一切，此生再无退路。",
+            "，是唯一被命运选中的人，这份无上的荣耀，要用一生的孤独与牺牲来偿还。",
+            "，拯救世界不是因为他想，而是因为除了他没人能做到——这份被迫的英雄主义，是他此生最沉重枷锁。",
+            "，一出手便知高低，他的实力让所有敌人闻风丧胆，却也让他永远无法融入平凡人间。",
+            "，是天地的宠儿，是命运的宠儿，却也是悲情的宠儿——越强大，越孤独。",
+            "，在他面前所谓天才不过是尘埃，可这份无敌的代价，是永远的高处不胜寒。",
+            "，拯救苍生这种事，除了他还有谁能做到？答案是没有。而这份唯一，便是他永恒的诅咒。",
+            "，是唯一能改写结局的人，却改不了自己悲怆的宿命，唯有在孤独中燃烧，在燃烧中守护。"
+        ];
+
+        // B组：纯意境句，不出现名字/他，禁止连续出现（45句，悲壮深情风格）
+        const pureElegantLib = [
+            // 原有15句保留
+            "手中利剑只为斩破黑暗，从未有一剑为自己而扬。",
+            "刹那流光划破长夜，一瞬璀璨便可定格永恒。",
+            "不为世间荣华而战，不为一己私利而争。",
+            "剑因守护而有温度，人因大义而有风骨。",
+            "踏遍生死险途，步履从未有过半分退缩。",
+            "纵使前路无光，亦甘愿化身世间唯一萤火。",
+            "执救世之利剑，守尘世之安宁，承亘古之意志。",
+            "褪去年少稚气，初心依旧澄澈不染尘埃。",
+            "当世间灯火沉寂，便是刺破幽暗的第一道晨光。",
+            "若天地间只剩一人承载希望，那份担当当之无愧。",
+            "以平凡肉身登临信念之巅，以骑士风骨加冕岁月永恒。",
+            "黑暗如潮水淹没四方，黎明终究会为勇者而来。",
+            "愿以己身之力，为世间苍生斩出一条未来坦途。",
+            "身负前路重任，一往无前，征战不息，绝不后退。",
+            "胸怀天下苍生，决意扛起整片天地的希望与未来。",
+            // 新增30句悲壮深情风格
+            "铠甲裂开露出新伤，新伤覆盖旧伤，每一道伤痕都是守护的勋章。",
+            "站在光明与黑暗的交界处，背负两界的重量却无人知晓。",
+            "将眼泪藏于星辰之下，将悲伤化作战胜黑暗的力量。",
+            "守护的代价是燃烧生命，而燃烧的尽头是永恒的孤独。",
+            "明知结局是悲剧，仍选择成为照亮他人的火炬。",
+            "悲怆而不屈的背影，在历史长河中化作不朽的传说。",
+            "荣耀的背后是无尽的牺牲，而牺牲的意义由后来者书写。",
+            "铠甲下的伤痕从不示人，因为那是守护者的秘密。",
+            "纵使全世界都沉入黑暗，他也要燃烧自己成为最后的光源。",
+            "有些守护注定孤独，有些牺牲注定沉默，但光芒永不熄灭。",
+            "命运的枷锁无法挣脱，唯有以血肉之躯承载光明。",
+            "每一剑刺出都是在告别，每一战结束都是在失去。",
+            "当世界遗忘了他，他却从未遗忘对世界的承诺。",
+            "悲壮的不是死亡，而是在明知死亡将至时依然选择守护。",
+            "守护者的泪无人看见，但他的光芒照亮了所有人。",
+            "纵身陨落如流星划过天际，那一瞬的光芒却照亮了永恒。",
+            "孤独的骑士走过四季，走过生死，走过宿命的羁绊。",
+            "有些剑注定要刺向自己，有些路注定要走入黑暗，只为换取光明。",
+            "铠甲会腐朽，荣耀会褪色，唯有精神在岁月中永不凋零。",
+            "当所有人都在逃避，他选择了最悲壮的赴死之道。",
+            "他将所有的温柔都给了苍生，所有的残酷都留给了自己。",
+            "牺牲不是终点，而是另一种永恒的开始。",
+            "世间最悲壮的勇敢，是认清命运残酷后依然选择守护。",
+            "光芒越盛，燃烧越烈；守护越深，代价越重。",
+            "骑士的背影渐行渐远，身后是万家灯火，身前是万丈深渊。",
+            "有些守护是悲歌，有些牺牲是壮举，他将两者融为一体。",
+            "当黑暗吞噬一切，唯有他愿意成为最后一道防线。",
+            "悲情不灭，热血难凉，纵九死亦无悔。",
+            "以燃烧灵魂为代价，换取片刻的光明与安宁。",
+            "这世间若还有光，那便是他们用生命换来的。",
+            // 龙傲天+悲壮风格新增15句
+            "虽举世无双天下无敌，却只能独自承受这份强大带来的无尽孤独。",
+            "救世主只有一个，天选之人不可替代，而这份唯一的荣耀，要用一生的孤独来偿还。",
+            "一剑光寒十九洲，碾压一切不服之人，可这份无敌，也让他永远失去了能并肩作战的同伴。",
+            "虽是天下第一，这不是狂妄，而是他不争的事实，也是他不归的宿命。",
+            "唯有他能打开那扇禁忌之门，却也要独自承受门后无尽的黑暗与代价。",
+            "拯救世界这种事，除了他不可能有第二人，天命如此，悲怆亦如此。",
+            "天选之人的道路，凡夫俗子永远无法理解，也无法企及，包括他的孤独。",
+            "他若一笑，天地失色；他若一怒，山河变色；可他若一哭，却无人敢问缘由。",
+            "碾压一切敌人，横扫一切障碍，天下无人能挡其锋芒——可这份锋芒，也刺伤了他自己。",
+            "天才之中的天才，传奇之中的传奇，也是孤独之中的孤独，悲怆之中的悲怆。",
+            "当他说出那句我来，连命运都要为他让路，可这份霸气背后，是他放弃的无数平凡幸福。",
+            "是唯一被命运选中的人，这是无可替代的荣耀，也是无可逃脱的永恒枷锁。",
+            "在他面前，所有所谓天才都黯然失色自愿称臣，可臣服者无数，理解他的人却一个都没有。",
+            "拯救苍生不是因为他想，而是因为除了他没人能做到——这份被迫的英雄主义，是他永恒的诅咒。",
+            "一出手便知强弱，他的实力让整个大陆为之颤抖，可这份强大，让他永远活在了高处不胜寒。"
+        ];
+
+        let finalText = "";
+        let currentAudio = null;
+        let isGenerating = false;
+
+        // ═══════════════════════════════════════════
+        //  工具函数
+        // ═══════════════════════════════════════════
+
+        // 数组随机打乱
+        function shuffleArr(arr) {
+            let newArr = [...arr];
+            for(let i = newArr.length - 1; i > 0; i--){
+                let j = Math.floor(Math.random() * (i + 1));
+                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+            }
+            return newArr;
+        }
+
+        // 处理A组：50%概率用真名，50%概率用「他」（自动去掉开头逗号）
+        function formatALine(name, aStr){
+            if(Math.random() > 0.5){
+                // 用真名
+                return name + aStr;
+            } else {
+                // 用「他」，去掉最前面的逗号
+                return "他" + aStr.replace(/^，/, '');
+            }
+        }
+
+        // ═══════════════════════════════════════════
+        //  核心：严格规则生成文案
+        //  铁律：A组可以无限连续
+        //         B组绝不连续，出现B下一句强制必是A
+        //         整体交替：真名句 + 代词句 + 意境句
+        // ═══════════════════════════════════════════
+
+        // 检测是否为龙傲天风格（关键词匹配）
+        function isOverpoweredTragic(text) {
+            const keywords = ['唯一', '举世无双', '天选', '无敌', '碾压', '天下第一', '救世主', '天才之中的天才', '命运的宠儿', '万中无一', '不可替代', '无人能挡'];
+            return keywords.some(kw => text.includes(kw));
+        }
+
+        function generateRandomText(){
+            let name = document.getElementById("username").value.trim();
+            if(!name){
+                alert("请先输入你的名字！");
+                return;
+            }
+            let totalLen = parseInt(document.getElementById("lenSel").value);
+
+            let poolA = shuffleArr([...namePrefixLib]);
+            let poolB = shuffleArr([...pureElegantLib]);
+
+            let res = [];
+            let lastIsB = false;
+            let skipCount = 0;
+            const MAX_SKIP = 10; // 防止无限循环
+
+            while(res.length < totalLen && skipCount < MAX_SKIP){
+                if(lastIsB){
+                    // 上一句是B，强制出A
+                    let aItem = poolA.pop() || namePrefixLib[Math.floor(Math.random() * namePrefixLib.length)];
+                    
+                    // 龙傲天概率降低：50%概率跳过
+                    if(isOverpoweredTragic(aItem) && Math.random() < 0.5){
+                        poolA.push(aItem); // 放回池中
+                        poolA = shuffleArr(poolA); // 打乱避免立即重新选中
+                        skipCount++;
+                        continue;
+                    }
+                    
+                    skipCount = 0;
+                    res.push(formatALine(name, aItem));
+                    lastIsB = false;
+                } else {
+                    // 35%概率出B，65%概率出A（B不连续，A可连续）
+                    let rand = Math.random();
+                    if(rand < 0.35){
+                        let bItem = poolB.pop() || pureElegantLib[Math.floor(Math.random() * pureElegantLib.length)];
+                        
+                        // 龙傲天概率降低
+                        if(isOverpoweredTragic(bItem) && Math.random() < 0.5){
+                            poolB.push(bItem);
+                            poolB = shuffleArr(poolB);
+                            skipCount++;
+                            continue;
+                        }
+                        
+                        skipCount = 0;
+                        res.push(bItem);
+                        lastIsB = true;
+                    } else {
+                        let aItem = poolA.pop() || namePrefixLib[Math.floor(Math.random() * namePrefixLib.length)];
+                        
+                        // 龙傲天概率降低
+                        if(isOverpoweredTragic(aItem) && Math.random() < 0.5){
+                            poolA.push(aItem);
+                            poolA = shuffleArr(poolA);
+                            skipCount++;
+                            continue;
+                        }
+                        
+                        skipCount = 0;
+                        res.push(formatALine(name, aItem));
+                        lastIsB = false;
+                    }
+                }
+                
+                // 池子耗尽重新补
+                if(poolA.length === 0) poolA = shuffleArr([...namePrefixLib]);
+                if(poolB.length === 0) poolB = shuffleArr([...pureElegantLib]);
+            }
+
+            finalText = res.join("\n");
+            document.getElementById("resultBox").innerText = finalText;
+        }
+
+        // ═══════════════════════════════════════════
+        //  AI配音朗读 - Edge TTS
+        // ═══════════════════════════════════════════
+
+        function setButtonLoading(btn, loading) {
+            if (loading) {
+                btn.disabled = true;
+                btn.dataset.originalText = btn.innerText;
+                btn.innerText = "AI正在生成...";
+            } else {
+                btn.disabled = false;
+                btn.innerText = btn.dataset.originalText || "一键AI配音朗读";
+            }
+        }
+
+        async function readVoice() {
+            if (!finalText) {
+                alert("请先生成专属文案！");
+                return;
+            }
+
+            if (isGenerating) return;
+            isGenerating = true;
+
+            const btn = document.getElementById("voiceBtn");
+            setButtonLoading(btn, true);
+
+            // 停止之前的音频
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+
+            const voiceId = document.getElementById("voiceSel").value;
+            const speed = parseFloat(document.getElementById("rateSel").value);
+
+            try {
+                // 调用 Edge TTS API
+                const response = await fetch(TTS_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        input: finalText,
+                        voice: voiceId,
+                        speed: speed,
+                        pitch: "0",
+                        style: "general"
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API请求失败: ${response.status}`);
+                }
+
+                // 获取音频数据并播放
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                currentAudio = new Audio(audioUrl);
+                currentAudio.play().catch(err => {
+                    console.error("播放失败:", err);
+                    alert("音频播放失败，请检查浏览器设置");
+                });
+
+                currentAudio.onended = () => {
+                    URL.revokeObjectURL(audioUrl);
+                };
+
+            } catch (error) {
+                console.error("TTS生成失败:", error);
+                alert(
+                    "⚠️ AI配音生成失败\n\n失败原因可能是：\n" +
+                    "1. 网络连接问题\n" +
+                    "2. 浏览器跨域限制（请用本地服务器打开页面）\n" +
+                    "3. API服务临时不可用\n\n" +
+                    "解决方案：在文件目录运行 python -m http.server 8000\n" +
+                    "然后访问 http://localhost:8000/sywz.html"
+                );
+                // 降级到浏览器原生语音
+                fallbackToBrowserTTS();
+            } finally {
+                isGenerating = false;
+                setButtonLoading(btn, false);
+            }
+        }
+
+        // 浏览器原生语音备选方案
+        function fallbackToBrowserTTS() {
+            window.speechSynthesis.cancel();
+            let utter = new SpeechSynthesisUtterance(finalText);
+            utter.lang = 'zh-CN';
+            utter.rate = parseFloat(document.getElementById("rateSel").value);
+
+            const voiceType = document.getElementById("voiceSel").value;
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                const voiceMap = {
+                    'zh-CN-YunhaoNeural': ['男', '云'],
+                    'zh-CN-YunjianNeural': ['男', '健'],
+                    'zh-CN-YunzeNeural': ['男', '泽'],
+                    'zh-CN-XiaozhenNeural': ['女', '甄'],
+                    'zh-CN-XiaoqiuNeural': ['女', '秋'],
+                    'zh-CN-XiaoyiNeural': ['女', '伊']
+                };
+                const keywords = voiceMap[voiceType] || [];
+                utter.voice = voices.find(v => keywords.some(k => v.name.includes(k))) || voices[0];
+            }
+            window.speechSynthesis.speak(utter);
+        }
+
+        // ═══════════════════════════════════════════
+        //  复制文案
+        // ═══════════════════════════════════════════
+
+        function copyText(){
+            if(!finalText){
+                alert("请先生成专属文案！");
+                return;
+            }
+            navigator.clipboard.writeText(finalText).then(()=>{
+                alert("✅ 文案已复制成功！");
+            })
+        }
+
+        // 预加载浏览器语音列表（用于备选方案）
+        window.speechSynthesis.onvoiceschanged = function(){
+            window.speechSynthesis.getVoices();
+        }
+    </script>
+</body>
+</html>
