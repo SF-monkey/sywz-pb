@@ -82,6 +82,7 @@ sywz-pb/
 
 ## 🛠️ 技术栈
 
+- **100% Vibe Coding**
 - **前端**: 纯 HTML + CSS + JavaScript（无框架依赖）
 - **AI 配音**: 微软 Edge TTS (tts.wangwangit.com API)
 - **降级方案**: 浏览器原生 SpeechSynthesis API
