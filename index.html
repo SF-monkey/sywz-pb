@@ -152,19 +152,7 @@
                     <option value="edge|zh-CN-XiaoyiNeural">晓伊·甜美女声</option>
                 </optgroup>
                 <optgroup label="—— 曼波 AI 配音（限300字）——">
-                    <option value="mibo|主持人女声">主持人女声</option>
-                    <option value="mibo|主持人男声">主持人男声</option>
-                    <option value="mibo|客服女声">客服女声</option>
-                    <option value="mibo|客服男声">客服男声</option>
-                    <option value="mibo|播音员">播音员</option>
-                    <option value="mibo|嗲妹妹">嗲妹妹</option>
-                    <option value="mibo|萝莉女声">萝莉女声</option>
-                    <option value="mibo|元气少女">元气少女</option>
-                    <option value="mibo|磁性男声">磁性男声</option>
-                    <option value="mibo|温柔女声">温柔女声</option>
-                    <option value="mibo|东北话男声">东北话男声</option>
-                    <option value="mibo|天津话男声">天津话男声</option>
-                    <option value="mibo|陕西话男声">陕西话男声</option>
+                    <option value="mibo">曼波AI配音</option>
                 </optgroup>
             </select>
             <div class="notice" id="voiceNotice"></div>
@@ -215,7 +203,7 @@
         // ═══════════════════════════════════════════
         //  曼波AI配音 API配置
         // ═══════════════════════════════════════════
-        const MIBO_API_URL = 'https://api.milorapart.top/apis/mbAisC';
+        const MIBO_API_URL = 'https://api.milorapart.top/apis/mbAIsc';
         const MIBO_MAX_CHARS = 300; // 曼波API最大字数限制
 
         // ═══════════════════════════════════════════
@@ -392,7 +380,7 @@
             }
 
             const selectedVoice = document.getElementById("voiceSel").value;
-            const [platform] = selectedVoice.split('|');
+            const platform = selectedVoice.startsWith('mibo') ? 'mibo' : 'edge';
             const totalLen = parseInt(document.getElementById("lenSel").value);
 
             // 曼波平台检查：14句超限
@@ -472,7 +460,7 @@
             }
 
             const selectedVoice = document.getElementById("voiceSel").value;
-            const [platform] = selectedVoice.split('|');
+            const platform = selectedVoice.startsWith('mibo') ? 'mibo' : 'edge';
 
             charCountEl.textContent = `当前文案字数：${len}字`;
 
@@ -495,7 +483,7 @@
 
         function onVoiceChange(){
             const selectedVoice = document.getElementById("voiceSel").value;
-            const [platform, voiceName] = selectedVoice.split('|');
+            const platform = selectedVoice.startsWith('mibo') ? 'mibo' : 'edge';
             const lenSel = document.getElementById("lenSel");
             const notice = document.getElementById('voiceNotice');
 
@@ -578,7 +566,7 @@
 
             try {
                 const selectedVoice = document.getElementById("voiceSel").value;
-                const [platform] = selectedVoice.split('|');
+                const platform = selectedVoice.startsWith('mibo') ? 'mibo' : 'edge';
 
                 if(platform === 'mibo'){
                     await readVoiceMibo();
@@ -600,7 +588,7 @@
 
         async function readVoiceEdge() {
             const selectedVoice = document.getElementById("voiceSel").value;
-            const [, voiceId] = selectedVoice.split('|');
+            const voiceId = selectedVoice.split('|')[1];
             const speed = parseFloat(document.getElementById("rateSel").value);
 
             try {
@@ -644,7 +632,7 @@
         function fallbackToBrowserTTS() {
             window.speechSynthesis.cancel();
             const selectedVoice = document.getElementById("voiceSel").value;
-            const [, voiceType] = selectedVoice.split('|');
+            const voiceType = selectedVoice.split('|')[1];
 
             let utter = new SpeechSynthesisUtterance(finalText);
             utter.lang = 'zh-CN';
@@ -676,9 +664,6 @@
                 alert(`曼波AI配音字数不能超过${MIBO_MAX_CHARS}字，当前${finalText.length}字，请减少文案长度！`);
                 throw new Error('字数超限');
             }
-
-            const selectedVoice = document.getElementById("voiceSel").value;
-            const [, voiceName] = selectedVoice.split('|');
 
             // 将换行符替换为逗号
             const textForApi = finalText.replace(/\n/g, '，');
