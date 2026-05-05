@@ -15,14 +15,14 @@
 
 
 ## 🚀 使用方法
-🎭 输入你的名字，马上领取龙浩晨同款歌颂旁白，支持 AI 配音朗读  
+🎭 输入你的大名，马上领取龙浩晨同款歌颂旁白，支持 AI 配音朗读  
 
 ### 在线访问（推荐）
 
 直接访问 GitHub Pages：
-```
-https://sf-monkey.github.io/sywz-pb/
-```
+
+[https://sf-monkey.github.io/sywz-pb/](https://sf-monkey.github.io/sywz-pb/)
+
 
 ### 本地使用
 
