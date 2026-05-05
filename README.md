@@ -85,5 +85,7 @@ sywz-pb/
 ## 🙏 致谢
 
 - AI 配音技术支持：
- * [VoiceCraft](https://tts.wangwangit.com/)
- * [MiloraAPI](https://api.milorapart.top/)
+  * [VoiceCraft](https://tts.wangwangit.com/)
+  * [MiloraAPI](https://api.milorapart.top/)
+- Agent:
+  * [腾讯WorkBuddy](https://www.codebuddy.cn/work/)
