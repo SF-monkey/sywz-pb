@@ -84,4 +84,6 @@ sywz-pb/
 
 ## 🙏 致谢
 
-- AI 配音技术支持：微软 Azure Neural Voices
+- AI 配音技术支持：
+ * [VoiceCraft](https://tts.wangwangit.com/)
+ * [MiloraAPI](https://api.milorapart.top/)
