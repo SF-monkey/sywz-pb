@@ -88,4 +88,4 @@ sywz-pb/
   * [VoiceCraft](https://tts.wangwangit.com/)
   * [MiloraAPI](https://api.milorapart.top/)
 - Agent：
-  * [腾讯WorkBuddy](https://www.codebuddy.cn/work/)
+  * [Tencent WorkBuddy](https://www.codebuddy.cn/work/)
