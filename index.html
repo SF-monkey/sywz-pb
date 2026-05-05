@@ -169,18 +169,6 @@
             </select>
         </div>
 
-        <!-- 曼波AI 语速 -->
-        <div class="row" id="miboRateSection" style="display:none;">
-            <label>朗读语速</label>
-            <select id="miboRateSel">
-                <option value="0.8">很慢</option>
-                <option value="0.9">较慢</option>
-                <option value="1.0" selected>标准</option>
-                <option value="1.1">较快</option>
-                <option value="1.2">很快</option>
-            </select>
-        </div>
-
         <div class="btn-group">
             <button onclick="generateRandomText()">随机生成文案</button>
             <button onclick="readVoice()" id="voiceBtn">一键AI配音朗读</button>
@@ -487,15 +475,14 @@
             const lenSel = document.getElementById("lenSel");
             const notice = document.getElementById('voiceNotice');
 
-            // 切换语速控件
+            // 切换语速控件（曼波不支持语速调节）
             document.getElementById('edgeRateSection').style.display = platform === 'edge' ? 'block' : 'none';
-            document.getElementById('miboRateSection').style.display = platform === 'mibo' ? 'block' : 'none';
 
             // 更新提示
             const tipText = document.getElementById('tipText');
             if(platform === 'mibo'){
-                tipText.textContent = '曼波AI配音（每次最多300字）';
-                notice.textContent = '⚠️ 曼波AI配音字数限制300字，14句版本不可用';
+                tipText.textContent = '曼波AI配音（不支持语速调节）';
+                notice.textContent = '⚠️ 曼波AI配音字数限制300字，14句版本不可用，且不支持语速调节';
                 notice.style.display = 'block';
             } else {
                 tipText.textContent = '配音基于微软Edge神经网络语音';
