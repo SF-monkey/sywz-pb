@@ -49,6 +49,10 @@
             outline: none;
             border: 1px solid #556899;
         }
+        select:disabled{
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         .btn-group{
             display: flex;
             gap: 12px;
@@ -72,6 +76,11 @@
             opacity: 0.9;
             transform: translateY(-2px);
         }
+        button:disabled{
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
         .result{
             margin-top:20px;
             padding:20px;
@@ -89,6 +98,28 @@
             margin-top:10px;
             text-align:center;
         }
+        .notice{
+            color:#ff9966;
+            font-size:13px;
+            margin-top:8px;
+            text-align:center;
+        }
+        .char-count{
+            color:#aaa;
+            font-size:13px;
+            margin-top:5px;
+            text-align:right;
+        }
+        .char-count.warning{
+            color:#ff6b6b;
+        }
+        .char-count.ok{
+            color:#66dd88;
+        }
+        /* 禁用选项样式 */
+        option:disabled {
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -102,32 +133,63 @@
 
         <div class="row">
             <label>文案长度选择</label>
-            <select id="lenSel">
-                <option value="6">短句精简版（6句）</option>
-                <option value="9" selected>标准适中版（9句）</option>
+            <select id="lenSel" onchange="onLenChange()">
+                <option value="6" selected>短句精简版（6句）</option>
+                <option value="9">标准适中版（9句）</option>
                 <option value="14">长篇史诗版（14句）</option>
             </select>
         </div>
 
         <div class="row">
             <label>配音音色选择</label>
-            <select id="voiceSel">
-				<option value="zh-CN-YunzeNeural">麦克阿瑟将军（推荐）</option>
-                <option value="zh-CN-YunhaoNeural">云皓·豪迈男声</option>
-                <option value="zh-CN-YunjianNeural">云健·稳重男声</option>
-				<option value="zh-CN-XiaoqiuNeural">晓秋·成熟女声（推荐）</option>
-                <option value="zh-CN-XiaozhenNeural">晓甄·端庄女声</option>
-                <option value="zh-CN-XiaoyiNeural">晓伊·甜美女声</option>
+            <select id="voiceSel" onchange="onVoiceChange()">
+                <optgroup label="—— 微软 Edge TTS ——">
+                    <option value="edge|zh-CN-YunzeNeural">麦克阿瑟将军（推荐）</option>
+                    <option value="edge|zh-CN-YunhaoNeural">云皓·豪迈男声</option>
+                    <option value="edge|zh-CN-YunjianNeural">云健·稳重男声</option>
+                    <option value="edge|zh-CN-XiaoqiuNeural">晓秋·成熟女声（推荐）</option>
+                    <option value="edge|zh-CN-XiaozhenNeural">晓甄·端庄女声</option>
+                    <option value="edge|zh-CN-XiaoyiNeural">晓伊·甜美女声</option>
+                </optgroup>
+                <optgroup label="—— 曼波 AI 配音（限300字）——">
+                    <option value="mibo|主持人女声">主持人女声</option>
+                    <option value="mibo|主持人男声">主持人男声</option>
+                    <option value="mibo|客服女声">客服女声</option>
+                    <option value="mibo|客服男声">客服男声</option>
+                    <option value="mibo|播音员">播音员</option>
+                    <option value="mibo|嗲妹妹">嗲妹妹</option>
+                    <option value="mibo|萝莉女声">萝莉女声</option>
+                    <option value="mibo|元气少女">元气少女</option>
+                    <option value="mibo|磁性男声">磁性男声</option>
+                    <option value="mibo|温柔女声">温柔女声</option>
+                    <option value="mibo|东北话男声">东北话男声</option>
+                    <option value="mibo|天津话男声">天津话男声</option>
+                    <option value="mibo|陕西话男声">陕西话男声</option>
+                </optgroup>
             </select>
+            <div class="notice" id="voiceNotice"></div>
         </div>
 
-        <div class="row">
+        <!-- 微软Edge TTS 语速 -->
+        <div class="row" id="edgeRateSection">
             <label>朗读语速</label>
             <select id="rateSel">
                 <option value="0.85">缓慢深情</option>
                 <option value="1.0" selected>标准旁白</option>
                 <option value="1.15">稍快激昂</option>
                 <option value="1.3">铿锵有力</option>
+            </select>
+        </div>
+
+        <!-- 曼波AI 语速 -->
+        <div class="row" id="miboRateSection" style="display:none;">
+            <label>朗读语速</label>
+            <select id="miboRateSel">
+                <option value="0.8">很慢</option>
+                <option value="0.9">较慢</option>
+                <option value="1.0" selected>标准</option>
+                <option value="1.1">较快</option>
+                <option value="1.2">很快</option>
             </select>
         </div>
 
@@ -140,7 +202,8 @@
         <div class="result" id="resultBox">
             输入名字生成
         </div>
-        <div class="tip">配音基于微软Edge神经网络语音</div>
+        <div class="char-count" id="charCount"></div>
+        <div class="tip" id="tipText">配音基于微软Edge神经网络语音</div>
     </div>
 
     <script>
@@ -150,12 +213,17 @@
         const TTS_API_URL = 'https://tts.wangwangit.com/v1/audio/speech';
 
         // ═══════════════════════════════════════════
-        //  文案素材库 （A组+B组 来自原版升级逻辑）
+        //  曼波AI配音 API配置
+        // ═══════════════════════════════════════════
+        const MIBO_API_URL = 'https://api.milorapart.top/apis/mbAisC';
+        const MIBO_MAX_CHARS = 300; // 曼波API最大字数限制
+
+        // ═══════════════════════════════════════════
+        //  文案素材库
         // ═══════════════════════════════════════════
 
-        // A组：可带名字/「他」的前缀句，后缀带逗号方便拼接（40句，悲壮深情风格）
+        // A组：可带名字/「他」的前缀句（60句，悲壮深情风格）
         const namePrefixLib = [
-            // 原有12句保留
             "，是光明神眷，骑士之巅，以凡躯承神命，以剑心照永恒。",
             "，如晨曦一缕微光，刺破永夜苍茫，照亮世间前路。",
             "，身负光明印记，历经万般磨难，淬炼无瑕本心。",
@@ -168,7 +236,6 @@
             "，坚守心中大义，挣脱宿命枷锁，不改守护初心。",
             "，怀谦卑公正之心，守仁义正义之道，愿舍己渡众生。",
             "，心怀悲悯，英勇执着，以灵魂纯粹立世间风骨。",
-            // 新增28句悲壮深情风格
             "，眼眸深处藏着星辰大海，胸腔里燃烧着不灭的信仰之焰。",
             "，甘愿以身为饵引燃黑暗，纵粉身碎骨也要为苍生换来一线生机。",
             "，将悲伤深埋于铠甲之下，将希望播撒于黎明之前。",
@@ -197,7 +264,6 @@
             "，站在悬崖边为别人铺路，哪怕自己坠入深渊也在所不惜。",
             "，心中有万千不舍，却只能化作更坚定的守护。",
             "，悲壮的背影是世间最美的风景，孤独的坚持是永恒的赞歌。",
-            // 龙傲天+悲壮风格新增20句
             "，虽是这世间唯一的救世主，却要独自承受救世使命带来的万钧重压。",
             "，天选之人，肩上扛着整个世界的命运，这份荣耀背后是无尽的孤独。",
             "，虽举世无双天下无敌，却只能独自站在巅峰，无人可理解他的孤独。",
@@ -220,9 +286,8 @@
             "，是唯一能改写结局的人，却改不了自己悲怆的宿命，唯有在孤独中燃烧，在燃烧中守护。"
         ];
 
-        // B组：纯意境句，不出现名字/他，禁止连续出现（45句，悲壮深情风格）
+        // B组：纯意境句，不出现名字/他（60句，悲壮深情风格）
         const pureElegantLib = [
-            // 原有15句保留
             "手中利剑只为斩破黑暗，从未有一剑为自己而扬。",
             "刹那流光划破长夜，一瞬璀璨便可定格永恒。",
             "不为世间荣华而战，不为一己私利而争。",
@@ -238,7 +303,6 @@
             "愿以己身之力，为世间苍生斩出一条未来坦途。",
             "身负前路重任，一往无前，征战不息，绝不后退。",
             "胸怀天下苍生，决意扛起整片天地的希望与未来。",
-            // 新增30句悲壮深情风格
             "铠甲裂开露出新伤，新伤覆盖旧伤，每一道伤痕都是守护的勋章。",
             "站在光明与黑暗的交界处，背负两界的重量却无人知晓。",
             "将眼泪藏于星辰之下，将悲伤化作战胜黑暗的力量。",
@@ -252,7 +316,7 @@
             "命运的枷锁无法挣脱，唯有以血肉之躯承载光明。",
             "每一剑刺出都是在告别，每一战结束都是在失去。",
             "当世界遗忘了他，他却从未遗忘对世界的承诺。",
-            "悲壮的不是死亡，而是在明知死亡将至时依然选择守护。",
+            "悲壮的的不是死亡，而是在明知死亡将至时依然选择守护。",
             "守护者的泪无人看见，但他的光芒照亮了所有人。",
             "纵身陨落如流星划过天际，那一瞬的光芒却照亮了永恒。",
             "孤独的骑士走过四季，走过生死，走过宿命的羁绊。",
@@ -269,7 +333,6 @@
             "悲情不灭，热血难凉，纵九死亦无悔。",
             "以燃烧灵魂为代价，换取片刻的光明与安宁。",
             "这世间若还有光，那便是他们用生命换来的。",
-            // 龙傲天+悲壮风格新增15句
             "虽举世无双天下无敌，却只能独自承受这份强大带来的无尽孤独。",
             "救世主只有一个，天选之人不可替代，而这份唯一的荣耀，要用一生的孤独来偿还。",
             "一剑光寒十九洲，碾压一切不服之人，可这份无敌，也让他永远失去了能并肩作战的同伴。",
@@ -295,7 +358,6 @@
         //  工具函数
         // ═══════════════════════════════════════════
 
-        // 数组随机打乱
         function shuffleArr(arr) {
             let newArr = [...arr];
             for(let i = newArr.length - 1; i > 0; i--){
@@ -305,25 +367,18 @@
             return newArr;
         }
 
-        // 处理A组：50%概率用真名，50%概率用「他」（自动去掉开头逗号）
         function formatALine(name, aStr){
             if(Math.random() > 0.5){
-                // 用真名
                 return name + aStr;
             } else {
-                // 用「他」，去掉最前面的逗号
                 return "他" + aStr.replace(/^，/, '');
             }
         }
 
         // ═══════════════════════════════════════════
         //  核心：严格规则生成文案
-        //  铁律：A组可以无限连续
-        //         B组绝不连续，出现B下一句强制必是A
-        //         整体交替：真名句 + 代词句 + 意境句
         // ═══════════════════════════════════════════
 
-        // 检测是否为龙傲天风格（关键词匹配）
         function isOverpoweredTragic(text) {
             const keywords = ['唯一', '举世无双', '天选', '无敌', '碾压', '天下第一', '救世主', '天才之中的天才', '命运的宠儿', '万中无一', '不可替代', '无人能挡'];
             return keywords.some(kw => text.includes(kw));
@@ -335,7 +390,16 @@
                 alert("请先输入一个名字！");
                 return;
             }
-            let totalLen = parseInt(document.getElementById("lenSel").value);
+
+            const selectedVoice = document.getElementById("voiceSel").value;
+            const [platform] = selectedVoice.split('|');
+            const totalLen = parseInt(document.getElementById("lenSel").value);
+
+            // 曼波平台检查：14句超限
+            if(platform === 'mibo' && totalLen > 9){
+                alert("曼波AI配音最多只能生成9句文案，请调整文案长度！");
+                return;
+            }
 
             let poolA = shuffleArr([...namePrefixLib]);
             let poolB = shuffleArr([...pureElegantLib]);
@@ -343,76 +407,153 @@
             let res = [];
             let lastIsB = false;
             let skipCount = 0;
-            const MAX_SKIP = 10; // 防止无限循环
+            const MAX_SKIP = 10;
 
             while(res.length < totalLen && skipCount < MAX_SKIP){
                 if(lastIsB){
-                    // 上一句是B，强制出A
                     let aItem = poolA.pop() || namePrefixLib[Math.floor(Math.random() * namePrefixLib.length)];
-                    
-                    // 龙傲天概率降低：50%概率跳过
                     if(isOverpoweredTragic(aItem) && Math.random() < 0.5){
-                        poolA.push(aItem); // 放回池中
-                        poolA = shuffleArr(poolA); // 打乱避免立即重新选中
+                        poolA.push(aItem);
+                        poolA = shuffleArr(poolA);
                         skipCount++;
                         continue;
                     }
-                    
                     skipCount = 0;
                     res.push(formatALine(name, aItem));
                     lastIsB = false;
                 } else {
-                    // 35%概率出B，65%概率出A（B不连续，A可连续）
                     let rand = Math.random();
                     if(rand < 0.35){
                         let bItem = poolB.pop() || pureElegantLib[Math.floor(Math.random() * pureElegantLib.length)];
-                        
-                        // 龙傲天概率降低
                         if(isOverpoweredTragic(bItem) && Math.random() < 0.5){
                             poolB.push(bItem);
                             poolB = shuffleArr(poolB);
                             skipCount++;
                             continue;
                         }
-                        
                         skipCount = 0;
                         res.push(bItem);
                         lastIsB = true;
                     } else {
                         let aItem = poolA.pop() || namePrefixLib[Math.floor(Math.random() * namePrefixLib.length)];
-                        
-                        // 龙傲天概率降低
                         if(isOverpoweredTragic(aItem) && Math.random() < 0.5){
                             poolA.push(aItem);
                             poolA = shuffleArr(poolA);
                             skipCount++;
                             continue;
                         }
-                        
                         skipCount = 0;
                         res.push(formatALine(name, aItem));
                         lastIsB = false;
                     }
                 }
-                
-                // 池子耗尽重新补
                 if(poolA.length === 0) poolA = shuffleArr([...namePrefixLib]);
                 if(poolB.length === 0) poolB = shuffleArr([...pureElegantLib]);
             }
 
             finalText = res.join("\n");
             document.getElementById("resultBox").innerText = finalText;
+
+            // 更新字数统计
+            updateCharCount();
         }
 
         // ═══════════════════════════════════════════
-        //  AI配音朗读 - Edge TTS
+        //  字数统计
         // ═══════════════════════════════════════════
 
-        function setButtonLoading(btn, loading) {
+        function updateCharCount(){
+            const charCountEl = document.getElementById('charCount');
+            const len = finalText.length;
+            if(!finalText){
+                charCountEl.textContent = '';
+                charCountEl.className = 'char-count';
+                return;
+            }
+
+            const selectedVoice = document.getElementById("voiceSel").value;
+            const [platform] = selectedVoice.split('|');
+
+            charCountEl.textContent = `当前文案字数：${len}字`;
+
+            if(platform === 'mibo'){
+                if(len > MIBO_MAX_CHARS){
+                    charCountEl.textContent += `（超过曼波限制${MIBO_MAX_CHARS}字，请减少文案长度）`;
+                    charCountEl.className = 'char-count warning';
+                } else {
+                    charCountEl.textContent += `（曼波限制${MIBO_MAX_CHARS}字，剩余${MIBO_MAX_CHARS - len}字）`;
+                    charCountEl.className = 'char-count ok';
+                }
+            } else {
+                charCountEl.className = 'char-count';
+            }
+        }
+
+        // ═══════════════════════════════════════════
+        //  音色/长度切换事件
+        // ═══════════════════════════════════════════
+
+        function onVoiceChange(){
+            const selectedVoice = document.getElementById("voiceSel").value;
+            const [platform, voiceName] = selectedVoice.split('|');
+            const lenSel = document.getElementById("lenSel");
+            const notice = document.getElementById('voiceNotice');
+
+            // 切换语速控件
+            document.getElementById('edgeRateSection').style.display = platform === 'edge' ? 'block' : 'none';
+            document.getElementById('miboRateSection').style.display = platform === 'mibo' ? 'block' : 'none';
+
+            // 更新提示
+            const tipText = document.getElementById('tipText');
+            if(platform === 'mibo'){
+                tipText.textContent = '曼波AI配音（每次最多300字）';
+                notice.textContent = '⚠️ 曼波AI配音字数限制300字，14句版本不可用';
+                notice.style.display = 'block';
+            } else {
+                tipText.textContent = '配音基于微软Edge神经网络语音';
+                notice.textContent = '';
+                notice.style.display = 'none';
+            }
+
+            // 更新长度选择
+            if(platform === 'mibo'){
+                // 禁用14句选项
+                for(let i = 0; i < lenSel.options.length; i++){
+                    if(lenSel.options[i].value === '14'){
+                        lenSel.options[i].disabled = true;
+                    } else {
+                        lenSel.options[i].disabled = false;
+                    }
+                }
+                // 如果当前选中14句，自动切换到9句
+                if(lenSel.value === '14'){
+                    lenSel.value = '9';
+                }
+            } else {
+                // 恢复所有选项
+                for(let i = 0; i < lenSel.options.length; i++){
+                    lenSel.options[i].disabled = false;
+                }
+            }
+
+            // 更新字数统计
+            updateCharCount();
+        }
+
+        function onLenChange(){
+            // 更新字数统计
+            updateCharCount();
+        }
+
+        // ═══════════════════════════════════════════
+        //  AI配音朗读 - 统一入口
+        // ═══════════════════════════════════════════
+
+        function setButtonLoading(btn, loading, customText) {
             if (loading) {
                 btn.disabled = true;
                 btn.dataset.originalText = btn.innerText;
-                btn.innerText = "AI正在生成...";
+                btn.innerText = customText || "AI正在生成...";
             } else {
                 btn.disabled = false;
                 btn.innerText = btn.dataset.originalText || "一键AI配音朗读";
@@ -424,24 +565,45 @@
                 alert("请先生成专属文案！");
                 return;
             }
-
             if (isGenerating) return;
             isGenerating = true;
 
             const btn = document.getElementById("voiceBtn");
-            setButtonLoading(btn, true);
+            setButtonLoading(btn, true, "AI正在生成...");
 
-            // 停止之前的音频
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
             }
 
-            const voiceId = document.getElementById("voiceSel").value;
+            try {
+                const selectedVoice = document.getElementById("voiceSel").value;
+                const [platform] = selectedVoice.split('|');
+
+                if(platform === 'mibo'){
+                    await readVoiceMibo();
+                } else {
+                    await readVoiceEdge();
+                }
+            } catch (error) {
+                console.error("配音生成失败:", error);
+                // 不弹窗，由各平台函数自行处理
+            } finally {
+                isGenerating = false;
+                setButtonLoading(btn, false);
+            }
+        }
+
+        // ═══════════════════════════════════════════
+        //  Edge TTS AI配音
+        // ═══════════════════════════════════════════
+
+        async function readVoiceEdge() {
+            const selectedVoice = document.getElementById("voiceSel").value;
+            const [, voiceId] = selectedVoice.split('|');
             const speed = parseFloat(document.getElementById("rateSel").value);
 
             try {
-                // 调用 Edge TTS API
                 const response = await fetch(TTS_API_URL, {
                     method: 'POST',
                     headers: {
@@ -460,7 +622,6 @@
                     throw new Error(`API请求失败: ${response.status}`);
                 }
 
-                // 获取音频数据并播放
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
 
@@ -475,31 +636,20 @@
                 };
 
             } catch (error) {
-                console.error("TTS生成失败:", error);
-                alert(
-                    "⚠️ AI配音生成失败\n\n失败原因可能是：\n" +
-                    "1. 网络连接问题\n" +
-                    "2. 浏览器跨域限制（请用本地服务器打开页面）\n" +
-                    "3. API服务临时不可用\n\n" +
-                    "解决方案：在文件目录运行 python -m http.server 8000\n" +
-                    "然后访问 http://localhost:8000/sywz.html"
-                );
-                // 降级到浏览器原生语音
+                console.error("Edge TTS生成失败:", error);
                 fallbackToBrowserTTS();
-            } finally {
-                isGenerating = false;
-                setButtonLoading(btn, false);
             }
         }
 
-        // 浏览器原生语音备选方案
         function fallbackToBrowserTTS() {
             window.speechSynthesis.cancel();
+            const selectedVoice = document.getElementById("voiceSel").value;
+            const [, voiceType] = selectedVoice.split('|');
+
             let utter = new SpeechSynthesisUtterance(finalText);
             utter.lang = 'zh-CN';
             utter.rate = parseFloat(document.getElementById("rateSel").value);
 
-            const voiceType = document.getElementById("voiceSel").value;
             const voices = window.speechSynthesis.getVoices();
             if (voices.length > 0) {
                 const voiceMap = {
@@ -517,6 +667,58 @@
         }
 
         // ═══════════════════════════════════════════
+        //  曼波AI配音
+        // ═══════════════════════════════════════════
+
+        async function readVoiceMibo() {
+            // 检查字数限制
+            if(finalText.length > MIBO_MAX_CHARS){
+                alert(`曼波AI配音字数不能超过${MIBO_MAX_CHARS}字，当前${finalText.length}字，请减少文案长度！`);
+                throw new Error('字数超限');
+            }
+
+            const selectedVoice = document.getElementById("voiceSel").value;
+            const [, voiceName] = selectedVoice.split('|');
+
+            // 将换行符替换为逗号
+            const textForApi = finalText.replace(/\n/g, '，');
+
+            try {
+                // 构建API URL（GET请求）
+                const apiUrl = `${MIBO_API_URL}?text=${encodeURIComponent(textForApi)}`;
+
+                console.log('曼波API请求URL:', apiUrl);
+
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API请求失败: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('曼波API返回数据:', data);
+
+                if(data.code !== 200 || !data.url){
+                    throw new Error(data.msg || 'API返回数据格式错误');
+                }
+
+                // 播放音频
+                currentAudio = new Audio(data.url);
+                await currentAudio.play();
+
+            } catch (error) {
+                console.error("曼波TTS生成失败:", error);
+                alert(`曼波AI配音生成失败：${error.message}\n\n可能原因：\n1. 网络连接问题\n2. API服务临时不可用\n3. 字数超出限制`);
+                throw error;
+            }
+        }
+
+        // ═══════════════════════════════════════════
         //  复制文案
         // ═══════════════════════════════════════════
 
@@ -530,10 +732,14 @@
             })
         }
 
-        // 预加载浏览器语音列表（用于备选方案）
         window.speechSynthesis.onvoiceschanged = function(){
             window.speechSynthesis.getVoices();
         }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function(){
+            onVoiceChange();
+        });
     </script>
 </body>
 </html>
