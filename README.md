@@ -27,9 +27,8 @@
 ### 本地使用
 
 1. **下载文件**
-   ```bash
-   git clone https://github.com/SF-monkey/sywz-pb.git
-   cd sywz-pb
+   ```
+   https://github.com/SF-monkey/sywz-pb/blob/main/index.html
    ```
 
 2. **启动本地服务器**（解决跨域问题）
